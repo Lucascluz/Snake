@@ -14,6 +14,10 @@ public class Snake : MonoBehaviour
     private readonly List<Transform> segments = new();
     private Vector2Int input;
     private float nextUpdate;
+    
+    // New: Wait for player input before starting
+    private bool hasStarted = false;
+    private bool isFirstInput = true;
 
     private void Start()
     {
@@ -22,16 +26,21 @@ public class Snake : MonoBehaviour
 
     private void Update()
     {
+        // Check for any directional input
+        bool inputReceived = false;
+        
         // Only allow turning up or down while moving in the x-axis
         if (direction.x != 0f)
         {
             if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
             {
                 input = Vector2Int.up;
+                inputReceived = true;
             }
             else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
             {
                 input = Vector2Int.down;
+                inputReceived = true;
             }
         }
         // Only allow turning left or right while moving in the y-axis
@@ -40,16 +49,37 @@ public class Snake : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
             {
                 input = Vector2Int.right;
+                inputReceived = true;
             }
             else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 input = Vector2Int.left;
+                inputReceived = true;
+            }
+        }
+        
+        // Also check for continuing in the same direction to start the game
+        if (!hasStarted)
+        {
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow) ||
+                Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow) ||
+                Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow) ||
+                Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                hasStarted = true;
+                isFirstInput = false;
             }
         }
     }
 
     private void FixedUpdate()
     {
+        // Don't move until the player provides input
+        if (!hasStarted)
+        {
+            return;
+        }
+        
         // Wait until the next update before proceeding
         if (Time.time < nextUpdate)
         {
@@ -90,24 +120,40 @@ public class Snake : MonoBehaviour
     public void ResetState()
     {
         direction = Vector2Int.right;
+        input = Vector2Int.zero;
+        nextUpdate = Time.time;
+        
+        // Reset the started flag - wait for player input
+        hasStarted = false;
+        isFirstInput = true;
+
         transform.position = Vector3.zero;
 
-        // Start at 1 to skip destroying the head
         for (int i = 1; i < segments.Count; i++)
-        {
             Destroy(segments[i].gameObject);
-        }
 
-        // Clear the list but add back this as the head
         segments.Clear();
         segments.Add(transform);
 
-        // -1 since the head is already in the list
         for (int i = 0; i < initialSize - 1; i++)
-        {
             Grow();
+
+        BoxCollider2D collider = GetComponent<BoxCollider2D>();
+        if (collider != null)
+        {
+            collider.enabled = false;
+            collider.enabled = true;
         }
     }
+    
+    /// <summary>
+    /// Check if the snake has started moving (player has provided input)
+    /// </summary>
+    public bool HasStarted()
+    {
+        return hasStarted;
+    }
+
 
     public bool Occupies(int x, int y)
     {
@@ -125,13 +171,32 @@ public class Snake : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // Don't process collisions if game hasn't started yet
+        if (!hasStarted)
+        {
+            return;
+        }
+        
+        // Don't process collisions during game over or if time is paused
+        if (Time.timeScale == 0f)
+        {
+            return;
+        }
+
         if (other.gameObject.CompareTag("Food"))
         {
             Grow();
+            if (Game.Instance != null)
+            {
+                Game.Instance.AddScore();
+            }
         }
         else if (other.gameObject.CompareTag("Obstacle"))
         {
-            ResetState();
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayObstacleHitSound();
+            }
             if (Game.Instance != null)
             {
                 Game.Instance.OnSnakeReset();
@@ -145,7 +210,10 @@ public class Snake : MonoBehaviour
             }
             else
             {
-                ResetState();
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayObstacleHitSound();
+                }
                 if (Game.Instance != null)
                 {
                     Game.Instance.OnSnakeReset();
@@ -169,5 +237,4 @@ public class Snake : MonoBehaviour
 
         transform.position = position;
     }
-
 }
