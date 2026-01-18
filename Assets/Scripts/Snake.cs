@@ -88,26 +88,30 @@ public class Snake : MonoBehaviour
     }
 
     public void ResetState()
+{
+    direction = Vector2Int.right;
+    input = Vector2Int.zero;
+    nextUpdate = Time.time;
+
+    transform.position = Vector3.zero;
+
+    for (int i = 1; i < segments.Count; i++)
+        Destroy(segments[i].gameObject);
+
+    segments.Clear();
+    segments.Add(transform);
+
+    for (int i = 0; i < initialSize - 1; i++)
+        Grow();
+
+    BoxCollider2D collider = GetComponent<BoxCollider2D>();
+    if (collider != null)
     {
-        direction = Vector2Int.right;
-        transform.position = Vector3.zero;
-
-        // Start at 1 to skip destroying the head
-        for (int i = 1; i < segments.Count; i++)
-        {
-            Destroy(segments[i].gameObject);
-        }
-
-        // Clear the list but add back this as the head
-        segments.Clear();
-        segments.Add(transform);
-
-        // -1 since the head is already in the list
-        for (int i = 0; i < initialSize - 1; i++)
-        {
-            Grow();
-        }
+        collider.enabled = false;
+        collider.enabled = true;
     }
+}
+
 
     public bool Occupies(int x, int y)
     {
@@ -125,13 +129,28 @@ public class Snake : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // Não processa colisões durante game over OU se o tempo está pausado
+        if (Time.timeScale == 0f)
+        {
+            return;
+        }
+        
+        // Ignora colisões nos primeiros frames após spawn
+        if (Time.time < 0.5f)
+        {
+            return;
+        }
+
         if (other.gameObject.CompareTag("Food"))
         {
             Grow();
+            if (Game.Instance != null)
+            {
+                Game.Instance.AddScore();
+            }
         }
         else if (other.gameObject.CompareTag("Obstacle"))
         {
-            ResetState();
             if (Game.Instance != null)
             {
                 Game.Instance.OnSnakeReset();
@@ -145,7 +164,6 @@ public class Snake : MonoBehaviour
             }
             else
             {
-                ResetState();
                 if (Game.Instance != null)
                 {
                     Game.Instance.OnSnakeReset();
@@ -169,5 +187,4 @@ public class Snake : MonoBehaviour
 
         transform.position = position;
     }
-
 }
