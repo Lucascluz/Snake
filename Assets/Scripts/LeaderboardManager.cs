@@ -30,7 +30,7 @@ public class LeaderboardManager : MonoBehaviour
     public static LeaderboardManager Instance { get; private set; }
 
     [Header("Leaderboard Settings")]
-    [SerializeField] private int maxEntries = 10;
+    [SerializeField] private int maxEntries = 50;
     [SerializeField] private string defaultPlayerName = "Player";
     
     private LeaderboardData leaderboardData;

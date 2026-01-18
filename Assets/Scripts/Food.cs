@@ -41,6 +41,12 @@ public class Food : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // Play eat sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayEatSound();
+        }
+        
         RandomizePosition();
     }
 

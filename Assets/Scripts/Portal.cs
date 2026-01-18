@@ -61,6 +61,12 @@ public class Portal : MonoBehaviour
         isTeleporting = true;
         connectedPortal.isTeleporting = true;
 
+        // Play teleport sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayPortalSound();
+        }
+
         // Calculate new position based on snake's direction
         Vector3 newPosition = connectedPortal.transform.position;
 

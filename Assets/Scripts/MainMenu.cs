@@ -2,193 +2,201 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Main Menu controller - handles the primary menu screen with Play, Leaderboard, and Quit options
+/// </summary>
 public class MainMenu : MonoBehaviour
 {
-    [Header("UI References")]
-    [SerializeField] private InputField nameInputField;
-    [SerializeField] private Text difficultyText;
-    [SerializeField] private Text descriptionText;
+    [Header("UI Panels")]
+    [SerializeField] private CanvasGroup mainPanel;
+    [SerializeField] private GameObject titleContainer;
     
-    [Header("Buttons")]
-    [SerializeField] private Button easyButton;
-    [SerializeField] private Button normalButton;
-    [SerializeField] private Button hardButton;
+    [Header("Title Animation")]
+    [SerializeField] private Text titleText;
+    [SerializeField] private Text subtitleText;
+    
+    [Header("Menu Buttons")]
     [SerializeField] private Button playButton;
     [SerializeField] private Button leaderboardButton;
     [SerializeField] private Button quitButton;
-
+    
     [Header("Leaderboard")]
     [SerializeField] private LeaderboardUI leaderboardUI;
-
+    
+    [Header("Visual Styling")]
+    [SerializeField] private Color primaryColor = new Color(0.3f, 0.85f, 0.4f);
+    [SerializeField] private Color secondaryColor = new Color(0.2f, 0.6f, 0.3f);
+    [SerializeField] private Color buttonColor = new Color(0.15f, 0.15f, 0.2f);
+    [SerializeField] private Color buttonHoverColor = new Color(0.25f, 0.25f, 0.35f);
+    
     [Header("Scene Settings")]
-    [SerializeField] private string gameSceneName = "GameScene";
+    [SerializeField] private string gameModeSceneName = "GameModeMenu";
 
-    private GameDifficulty selectedDifficulty = GameDifficulty.Normal;
+    private float titleAnimationTime = 0f;
+    private Vector3 titleOriginalScale = Vector3.one;
 
     private void Start()
     {
-        // Configurar listeners dos botões
-        if (easyButton != null)
-            easyButton.onClick.AddListener(() => SelectDifficulty(GameDifficulty.Easy));
+        SetupButtonListeners();
+        SetupButtonStyles();
         
-        if (normalButton != null)
-            normalButton.onClick.AddListener(() => SelectDifficulty(GameDifficulty.Normal));
+        // Store original title scale for animation
+        if (titleText != null)
+        {
+            titleOriginalScale = titleText.transform.localScale;
+        }
         
-        if (hardButton != null)
-            hardButton.onClick.AddListener(() => SelectDifficulty(GameDifficulty.Hard));
+        // Fade in animation
+        if (mainPanel != null)
+        {
+            mainPanel.alpha = 0f;
+            StartCoroutine(FadeIn(mainPanel, 0.4f));
+        }
         
+        // Animate title entrance
+        if (titleContainer != null || titleText != null)
+        {
+            StartCoroutine(AnimateTitleEntrance());
+        }
+    }
+
+    private void Update()
+    {
+        // Subtle title animation
+        AnimateTitle();
+        
+        // Keyboard shortcuts
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Space))
+        {
+            PlayGame();
+        }
+        else if (Input.GetKeyDown(KeyCode.L))
+        {
+            ShowLeaderboard();
+        }
+        else if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            QuitGame();
+        }
+    }
+
+    private void AnimateTitle()
+    {
+        if (titleText == null) return;
+        
+        titleAnimationTime += Time.deltaTime;
+        
+        // Gentle floating animation
+        float yOffset = Mathf.Sin(titleAnimationTime * 1.5f) * 3f;
+        float scaleOffset = 1f + Mathf.Sin(titleAnimationTime * 2f) * 0.02f;
+        
+        titleText.transform.localPosition = new Vector3(
+            titleText.transform.localPosition.x,
+            yOffset,
+            titleText.transform.localPosition.z
+        );
+        
+        titleText.transform.localScale = titleOriginalScale * scaleOffset;
+    }
+
+    private System.Collections.IEnumerator AnimateTitleEntrance()
+    {
+        if (titleText != null)
+        {
+            titleText.transform.localScale = Vector3.zero;
+        }
+        if (subtitleText != null)
+        {
+            subtitleText.color = new Color(subtitleText.color.r, subtitleText.color.g, subtitleText.color.b, 0f);
+        }
+        
+        yield return new WaitForSeconds(0.2f);
+        
+        // Animate title scale
+        if (titleText != null)
+        {
+            float elapsed = 0f;
+            float duration = 0.5f;
+            
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+                // Ease out back
+                float overshoot = 1.5f;
+                t = 1f - Mathf.Pow(1f - t, 2f);
+                t = t * (1f + overshoot * (1f - t));
+                
+                titleText.transform.localScale = titleOriginalScale * Mathf.Min(t, 1.1f);
+                yield return null;
+            }
+            
+            titleText.transform.localScale = titleOriginalScale;
+        }
+        
+        // Fade in subtitle
+        if (subtitleText != null)
+        {
+            float elapsed = 0f;
+            float duration = 0.3f;
+            Color startColor = subtitleText.color;
+            
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+                subtitleText.color = new Color(startColor.r, startColor.g, startColor.b, t);
+                yield return null;
+            }
+        }
+    }
+
+    private void SetupButtonListeners()
+    {
         if (playButton != null)
-            playButton.onClick.AddListener(StartGame);
+            playButton.onClick.AddListener(PlayGame);
         
         if (leaderboardButton != null)
             leaderboardButton.onClick.AddListener(ShowLeaderboard);
         
         if (quitButton != null)
             quitButton.onClick.AddListener(QuitGame);
-
-        // Carregar configurações salvas (se existirem)
-        LoadSavedSettings();
-
-        // Selecionar dificuldade inicial
-        SelectDifficulty(selectedDifficulty);
     }
 
-    /// <summary>
-    /// Seleciona a dificuldade do jogo
-    /// </summary>
-    private void SelectDifficulty(GameDifficulty difficulty)
+    private void SetupButtonStyles()
     {
-        selectedDifficulty = difficulty;
-
-        // Atualizar UI
-        UpdateDifficultyUI();
-        UpdateButtonHighlight();
+        StyleButton(playButton, primaryColor);
+        StyleButton(leaderboardButton, buttonColor, secondaryColor);
+        StyleButton(quitButton, buttonColor, new Color(0.8f, 0.3f, 0.3f));
     }
 
-    /// <summary>
-    /// Atualiza texto de dificuldade e descrição
-    /// </summary>
-    private void UpdateDifficultyUI()
-    {
-        if (difficultyText != null)
-        {
-            difficultyText.text = selectedDifficulty.ToString().ToUpper();
-        }
-
-        if (descriptionText != null)
-        {
-            switch (selectedDifficulty)
-            {
-                case GameDifficulty.Easy:
-                    descriptionText.text = "• No obstacles\n• Can pass through walls\n• Perfect for beginners!";
-                    break;
-                case GameDifficulty.Normal:
-                    descriptionText.text = "• No obstacles\n• Walls are deadly\n• Classic Snake experience";
-                    break;
-                case GameDifficulty.Hard:
-                    descriptionText.text = "• Random obstacles spawn\n• Portals teleport you\n• Walls are deadly\n• Ultimate challenge!";
-                    break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Destaca o botão da dificuldade selecionada
-    /// </summary>
-    private void UpdateButtonHighlight()
-    {
-        // Reset todos os botões
-        ResetButtonColor(easyButton);
-        ResetButtonColor(normalButton);
-        ResetButtonColor(hardButton);
-
-        // Destacar botão selecionado
-        Button selectedButton = null;
-        Color highlightColor = Color.white;
-
-        switch (selectedDifficulty)
-        {
-            case GameDifficulty.Easy:
-                selectedButton = easyButton;
-                highlightColor = new Color(0.5f, 1f, 0.5f); // Verde claro
-                break;
-            case GameDifficulty.Normal:
-                selectedButton = normalButton;
-                highlightColor = new Color(1f, 0.8f, 0.3f); // Amarelo
-                break;
-            case GameDifficulty.Hard:
-                selectedButton = hardButton;
-                highlightColor = new Color(1f, 0.3f, 0.3f); // Vermelho
-                break;
-        }
-
-        if (selectedButton != null)
-        {
-            ColorBlock colors = selectedButton.colors;
-            colors.normalColor = highlightColor;
-            colors.selectedColor = highlightColor;
-            selectedButton.colors = colors;
-        }
-    }
-
-    /// <summary>
-    /// Reseta a cor do botão
-    /// </summary>
-    private void ResetButtonColor(Button button)
+    private void StyleButton(Button button, Color normalColor, Color? hoverColor = null)
     {
         if (button == null) return;
-
+        
+        Color hover = hoverColor ?? new Color(normalColor.r + 0.15f, normalColor.g + 0.15f, normalColor.b + 0.15f);
+        
         ColorBlock colors = button.colors;
-        colors.normalColor = Color.white;
-        colors.selectedColor = Color.white;
+        colors.normalColor = normalColor;
+        colors.highlightedColor = hover;
+        colors.pressedColor = new Color(normalColor.r - 0.1f, normalColor.g - 0.1f, normalColor.b - 0.1f);
+        colors.selectedColor = normalColor;
+        colors.fadeDuration = 0.1f;
         button.colors = colors;
     }
 
     /// <summary>
-    /// Inicia o jogo
+    /// Navigate to game mode selection
     /// </summary>
-    private void StartGame()
+    public void PlayGame()
     {
-        // Validar nome da cena
-        if (string.IsNullOrEmpty(gameSceneName))
-        {
-            Debug.LogError("Game Scene Name não está configurado no MainMenu!");
-            gameSceneName = "GameScene"; // Valor padrão
-        }
-
-        // Criar ou obter GameSettings
-        GameSettings settings = GameSettings.Instance;
-        
-        if (settings == null)
-        {
-            GameObject settingsObj = new GameObject("GameSettings");
-            settings = settingsObj.AddComponent<GameSettings>();
-        }
-        
-        // Configurar nome do jogador
-        string playerName = "Player";
-        if (nameInputField != null && !string.IsNullOrEmpty(nameInputField.text))
-        {
-            playerName = nameInputField.text;
-        }
-        settings.SetPlayerName(playerName);
-
-        // Configurar dificuldade
-        settings.SetDifficulty(selectedDifficulty);
-
-        // Salvar configurações
-        SaveSettings();
-
-        Debug.Log($"Starting game with Player: {playerName}, Difficulty: {selectedDifficulty}");
-
-        // Carregar cena do jogo
-        SceneManager.LoadScene(gameSceneName);
+        StartCoroutine(TransitionToScene(gameModeSceneName));
     }
 
     /// <summary>
-    /// Mostra o leaderboard
+    /// Show the leaderboard panel
     /// </summary>
-    private void ShowLeaderboard()
+    public void ShowLeaderboard()
     {
         if (leaderboardUI != null)
         {
@@ -197,9 +205,9 @@ public class MainMenu : MonoBehaviour
     }
 
     /// <summary>
-    /// Sai do jogo
+    /// Exit the game
     /// </summary>
-    private void QuitGame()
+    public void QuitGame()
     {
         #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
@@ -208,41 +216,36 @@ public class MainMenu : MonoBehaviour
         #endif
     }
 
-    /// <summary>
-    /// Salva configurações usando PlayerPrefs
-    /// </summary>
-    private void SaveSettings()
+    private System.Collections.IEnumerator TransitionToScene(string sceneName)
     {
-        string playerName = "Player";
-        if (nameInputField != null && !string.IsNullOrEmpty(nameInputField.text))
+        // Fade out
+        if (mainPanel != null)
         {
-            playerName = nameInputField.text;
-        }
-        
-        PlayerPrefs.SetString("PlayerName", playerName);
-        PlayerPrefs.SetInt("Difficulty", (int)selectedDifficulty);
-        PlayerPrefs.Save();
-        
-        Debug.Log($"Settings saved: {playerName}, Difficulty: {selectedDifficulty}");
-    }
-
-    /// <summary>
-    /// Carrega configurações salvas
-    /// </summary>
-    private void LoadSavedSettings()
-    {
-        if (PlayerPrefs.HasKey("PlayerName"))
-        {
-            string savedName = PlayerPrefs.GetString("PlayerName");
-            if (nameInputField != null)
+            float elapsed = 0f;
+            float duration = 0.25f;
+            
+            while (elapsed < duration)
             {
-                nameInputField.text = savedName;
+                elapsed += Time.deltaTime;
+                mainPanel.alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
+                yield return null;
             }
         }
+        
+        SceneManager.LoadScene(sceneName);
+    }
 
-        if (PlayerPrefs.HasKey("Difficulty"))
+    private System.Collections.IEnumerator FadeIn(CanvasGroup canvasGroup, float duration)
+    {
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
         {
-            selectedDifficulty = (GameDifficulty)PlayerPrefs.GetInt("Difficulty");
+            elapsed += Time.deltaTime;
+            canvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / duration);
+            yield return null;
         }
+        
+        canvasGroup.alpha = 1f;
     }
 }

@@ -155,8 +155,13 @@ MonoBehaviour:
   entryPrefab: {fileID: 3241048639463814422, guid: e006f75c5efab5f4c8a67245cb3ab6bf,
     type: 3}
   closeButton: {fileID: 901333967}
+  titleText: {fileID: 0}
   newRecordIndicator: {fileID: 839935448}
   rankText: {fileID: 20553966}
+  goldColor: {r: 1, g: 0.84, b: 0, a: 0.4}
+  silverColor: {r: 0.75, g: 0.75, b: 0.78, a: 0.35}
+  bronzeColor: {r: 0.8, g: 0.5, b: 0.2, a: 0.3}
+  panelColor: {r: 0.1, g: 0.1, b: 0.15, a: 0.98}
 --- !u!224 &20157158
 RectTransform:
   m_ObjectHideFlags: 0
@@ -380,7 +385,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &169251193
 RectTransform:
   m_ObjectHideFlags: 0
@@ -693,7 +698,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1892707013}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &722766134
 BoxCollider2D:
@@ -1495,6 +1500,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 970776230}
   m_CullTransparentMesh: 1
+--- !u!1 &990366272
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 990366274}
+  - component: {fileID: 990366273}
+  m_Layer: 0
+  m_Name: _UISetup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &990366273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 990366272}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b410802cd381d7bada1623a3aa2ea7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameSceneUISetup
+--- !u!4 &990366274
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 990366272}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1045030108
 GameObject:
   m_ObjectHideFlags: 0
@@ -1642,6 +1691,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MenuNavigation
   mainMenuSceneName: MainMenu
+  gameModeMenuSceneName: GameModeMenu
   gameSceneName: GameScene
 --- !u!4 &1054705960
 Transform:
@@ -2831,7 +2881,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1466797294}
   m_HandleRect: {fileID: 1466797293}
   m_Direction: 2
-  m_Value: 0.9999996
+  m_Value: 0.9999997
   m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2892,7 +2942,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1665386841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3276,6 +3326,8 @@ MonoBehaviour:
   highScoreText: {fileID: 169251195}
   gameOverUI: {fileID: 1665386840}
   leaderboardUI: {fileID: 20157157}
+  startPromptText: {fileID: 0}
+  startPromptPanel: {fileID: 0}
   food: {fileID: 1406060361}
   pointsPerFood: 10
   obstaclePrefab: {fileID: 2098978140}
@@ -3299,6 +3351,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1372819367}
+  - {fileID: 722766133}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1941086480
@@ -3383,7 +3436,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1401410902}
   m_HandleRect: {fileID: 1401410901}
   m_Direction: 0
-  m_Value: -0.00000021457672
+  m_Value: -0.0000006675723
   m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -3444,7 +3497,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2093093017
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3949,7 +4002,7 @@ SceneRoots:
   - {fileID: 1431457605}
   - {fileID: 962302029}
   - {fileID: 1892707013}
-  - {fileID: 722766133}
   - {fileID: 223611823}
   - {fileID: 500026475}
   - {fileID: 1054705960}
+  - {fileID: 990366274}
